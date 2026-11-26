@@ -164,17 +164,22 @@ fn mock_reply(chunks: Vec<&'static [u8]>) -> Result<rig::Radio, String> {
 }
 #[test]
 fn rig_waits_for_complete_fragmented_reply() {
-    let r = mock_reply(vec![b"145800000\nFM\n12", b"500\n"]).unwrap();
+    let r = mock_reply(vec![b"145800000\nF", b"M\n"]).unwrap();
     assert_eq!(r.mhz, 145.8);
     assert_eq!(r.mode, "FM");
 }
 #[test]
 fn rig_rejects_errors_disconnect_and_invalid_values() {
-    for chunks in [
-        vec![b"RPRT -1\n".as_slice()],
-        vec![b"145800000\n".as_slice()],
-        vec![b"NaN\nFM\n12500\n".as_slice()],
+    for (reply, reason) in [
+        (
+            b"RPRT -1\n".as_slice(),
+            "rejected the frequency request (RPRT -1)",
+        ),
+        (b"145800000\n".as_slice(), "before returning the mode"),
+        (b"NaN\nFM\n12500\n".as_slice(), "Invalid SDR++ frequency"),
+        (b"145800000\n?\n".as_slice(), "Invalid SDR++ mode"),
     ] {
-        assert!(mock_reply(chunks).is_err());
+        let error = mock_reply(vec![reply]).unwrap_err();
+        assert!(error.contains(reason), "{error}");
     }
 }

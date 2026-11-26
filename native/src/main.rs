@@ -199,8 +199,8 @@ impl RadioLog {
                     self.message=format!("Autofilled. Suggested type: {hint}; change it if needed. Nothing saved until you press Save.");
                 }
                 Err(e) => {
-                    self.radio_status = "Not connected".into();
-                    self.message = e;
+                    self.radio_status = format!("Autofill failed. {e}");
+                    self.message.clear();
                 }
             }
         }
@@ -419,7 +419,7 @@ impl RadioLog {
             {
                 self.request_radio(ctx);
             }
-            ui.small(&self.radio_status);
+            ui.add(egui::Label::new(RichText::new(&self.radio_status).small()).wrap());
         }
         ui.collapsing("SDR++ setup", |ui| {
             ui.label("In SDR++, open Rigctl Server:");
